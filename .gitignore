@@ -1,0 +1,15 @@
+.qmake.stash
+Makefile
+*.o
+libv_repExtBubbleRob.1.0.0.dylib
+libv_repExtBubbleRob.1.0.dylib
+libv_repExtBubbleRob.1.dylib
+libv_repExtBubbleRob.dylib
+libv_repExtBubbleRob.so
+libv_repExtBubbleRob.so.1
+libv_repExtBubbleRob.so.1.0
+libv_repExtBubbleRob.so.1.0.0
+Makefile.Debug
+Makefile.Release
+debug/
+release/
