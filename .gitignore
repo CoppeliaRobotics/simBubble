@@ -13,3 +13,4 @@ Makefile.Debug
 Makefile.Release
 debug/
 release/
+*.user
