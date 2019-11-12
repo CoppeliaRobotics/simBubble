@@ -1,7 +1,7 @@
 QT -= core
 QT -= gui
 
-TARGET = v_repExtBubbleRob
+TARGET = simExtBubbleRob
 TEMPLATE = lib
 
 DEFINES -= UNICODE
@@ -34,15 +34,15 @@ INCLUDEPATH += "../include"
 }
 
 win32 {
-    DEFINES += WIN_VREP
+    DEFINES += WIN_SIM
 }
 
 macx {
-    DEFINES += MAC_VREP
+    DEFINES += MAC_SIM
 }
 
 unix:!macx {
-    DEFINES += LIN_VREP
+    DEFINES += LIN_SIM
 }
 
 unix:!symbian {
@@ -55,14 +55,14 @@ unix:!symbian {
 }
 
 HEADERS += \
-    v_repExtBubbleRob.h \
+    simExtBubbleRob.h \
     ../include/scriptFunctionData.h \
     ../include/scriptFunctionDataItem.h \
-    ../include/v_repLib.h 
+    ../include/simLib.h 
 
 SOURCES += \
-    v_repExtBubbleRob.cpp \
+    simExtBubbleRob.cpp \
     ../common/scriptFunctionData.cpp \
     ../common/scriptFunctionDataItem.cpp \
-    ../common/v_repLib.cpp
+    ../common/simLib.cpp
 

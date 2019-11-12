@@ -1,7 +1,7 @@
-#include "v_repExtBubbleRob.h"
+#include "simExtBubbleRob.h"
 #include "scriptFunctionData.h"
 #include <iostream>
-#include "v_repLib.h"
+#include "simLib.h"
 
 #ifdef _WIN32
     #ifdef QT_COMPIL
@@ -21,7 +21,7 @@
 
 #define PLUGIN_NAME "BubbleRob"
 
-LIBRARY vrepLib;
+LIBRARY simLib;
 
 struct sBubbleRob
 {
@@ -200,9 +200,9 @@ void LUA_STOP_CALLBACK(SScriptCallBack* cb)
 // --------------------------------------------------------------------------------------
 
 
-VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt)
-{ // This is called just once, at the start of V-REP.
-    // Dynamically load and bind V-REP functions:
+SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
+{ // This is called just once, at the start of CoppeliaSim.
+    // Dynamically load and bind CoppeliaSim functions:
     char curDirAndFile[1024];
 #ifdef _WIN32
     #ifdef QT_COMPIL
@@ -219,35 +219,35 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt)
     std::string temp(currentDirAndPath);
 
 #ifdef _WIN32
-    temp+="\\v_rep.dll";
+    temp+="\\coppeliaSim.dll";
 #elif defined (__linux)
-    temp+="/libv_rep.so";
+    temp+="/libcoppeliaSim.so";
 #elif defined (__APPLE__)
-    temp+="/libv_rep.dylib";
+    temp+="/libcoppeliaSim.dylib";
 #endif /* __linux || __APPLE__ */
 
-    vrepLib=loadVrepLibrary(temp.c_str());
-    if (vrepLib==NULL)
+    simLib=loadSimLibrary(temp.c_str());
+    if (simLib==NULL)
     {
-        std::cout << "Error, could not find or correctly load v_rep.dll. Cannot start 'BubbleRob' plugin.\n";
-        return(0); // Means error, V-REP will unload this plugin
+        std::cout << "Error, could not find or correctly load coppeliaSim.dll. Cannot start 'BubbleRob' plugin.\n";
+        return(0); // Means error, CoppeliaSim will unload this plugin
     }
-    if (getVrepProcAddresses(vrepLib)==0)
+    if (getSimProcAddresses(simLib)==0)
     {
-        std::cout << "Error, could not find all required functions in v_rep.dll. Cannot start 'BubbleRob' plugin.\n";
-        unloadVrepLibrary(vrepLib);
-        return(0); // Means error, V-REP will unload this plugin
+        std::cout << "Error, could not find all required functions in coppeliaSim.dll. Cannot start 'BubbleRob' plugin.\n";
+        unloadSimLibrary(simLib);
+        return(0); // Means error, CoppeliaSim will unload this plugin
     }
 
-    // Check the V-REP version:
-    int vrepVer,vrepRev;
-    simGetIntegerParameter(sim_intparam_program_version,&vrepVer);
-    simGetIntegerParameter(sim_intparam_program_revision,&vrepRev);
-    if( (vrepVer<30400) || ((vrepVer==30400)&&(vrepRev<9)) )
+    // Check the CoppeliaSim version:
+    int simVer,simRev;
+    simGetIntegerParameter(sim_intparam_program_version,&simVer);
+    simGetIntegerParameter(sim_intparam_program_revision,&simRev);
+    if( (simVer<30400) || ((simVer==30400)&&(simRev<9)) )
     {
-        std::cout << "Sorry, your V-REP copy is somewhat old, V-REP 3.4.0 rev9 or higher is required. Cannot start 'BubbleRob' plugin.\n";
-        unloadVrepLibrary(vrepLib);
-        return(0); // Means error, V-REP will unload this plugin
+        std::cout << "Sorry, your CoppeliaSim copy is somewhat old, CoppeliaSim 3.4.0 rev9 or higher is required. Cannot start 'BubbleRob' plugin.\n";
+        unloadSimLibrary(simLib);
+        return(0); // Means error, CoppeliaSim will unload this plugin
     }
 
     simRegisterScriptVariable("simBubble","require('simExtBubbleRob')",0);
@@ -269,21 +269,21 @@ VREP_DLLEXPORT unsigned char v_repStart(void* reservedPointer,int reservedInt)
     simRegisterScriptCallbackFunction(strConCat("simExtBubble_stop","@",PLUGIN_NAME),strConCat("Please use the ",LUA_STOP_COMMAND," notation instead"),0);
 
     return(9); // initialization went fine, we return the version number of this plugin (can be queried with simGetModuleName)
-    // version 1 was for V-REP versions before V-REP 2.5.12
-    // version 2 was for V-REP versions before V-REP 2.6.0
-    // version 5 was for V-REP versions before V-REP 3.1.0 
-    // version 6 is for V-REP versions after V-REP 3.1.3
-    // version 7 is for V-REP versions after V-REP 3.2.0 (completely rewritten)
-    // version 8 is for V-REP versions after V-REP 3.3.0 (using stacks for data exchange with scripts)
-    // version 9 is for V-REP versions after V-REP 3.4.0 (new API notation)
+    // version 1 was for CoppeliaSim versions before CoppeliaSim 2.5.12
+    // version 2 was for CoppeliaSim versions before CoppeliaSim 2.6.0
+    // version 5 was for CoppeliaSim versions before CoppeliaSim 3.1.0
+    // version 6 is for CoppeliaSim versions after CoppeliaSim 3.1.3
+    // version 7 is for CoppeliaSim versions after CoppeliaSim 3.2.0 (completely rewritten)
+    // version 8 is for CoppeliaSim versions after CoppeliaSim 3.3.0 (using stacks for data exchange with scripts)
+    // version 9 is for CoppeliaSim versions after CoppeliaSim 3.4.0 (new API notation)
 }
 
-VREP_DLLEXPORT void v_repEnd()
-{ // This is called just once, at the end of V-REP
-    unloadVrepLibrary(vrepLib); // release the library
+SIM_DLLEXPORT void simEnd()
+{ // This is called just once, at the end of CoppeliaSim
+    unloadSimLibrary(simLib); // release the library
 }
 
-VREP_DLLEXPORT void* v_repMessage(int message,int* auxiliaryData,void* customData,int* replyData)
+SIM_DLLEXPORT void* simMessage(int message,int* auxiliaryData,void* customData,int* replyData)
 { // This is called quite often. Just watch out for messages/events you want to handle
     // This function should not generate any error messages:
     int errorModeSaved;
