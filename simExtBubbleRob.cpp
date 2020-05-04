@@ -229,12 +229,12 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     simLib=loadSimLibrary(temp.c_str());
     if (simLib==NULL)
     {
-        std::cout << "Error, could not find or correctly load coppeliaSim.dll. Cannot start 'BubbleRob' plugin.\n";
+        std::cout << "simExtBubbleRob plugin error: could not find or correctly load coppeliaSim.dll. Cannot start 'BubbleRob' plugin.\n";
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
     if (getSimProcAddresses(simLib)==0)
     {
-        std::cout << "Error, could not find all required functions in coppeliaSim.dll. Cannot start 'BubbleRob' plugin.\n";
+        std::cout << "simExtBubbleRob plugin error: could not find all required functions in coppeliaSim.dll. Cannot start 'BubbleRob' plugin.\n";
         unloadSimLibrary(simLib);
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
@@ -245,7 +245,7 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     simGetIntegerParameter(sim_intparam_program_revision,&simRev);
     if( (simVer<30400) || ((simVer==30400)&&(simRev<9)) )
     {
-        std::cout << "Sorry, your CoppeliaSim copy is somewhat old, CoppeliaSim 3.4.0 rev9 or higher is required. Cannot start 'BubbleRob' plugin.\n";
+        std::cout << "simExtBubbleRob plugin error: sorry, your CoppeliaSim copy is somewhat old, CoppeliaSim 3.4.0 rev9 or higher is required. Cannot start 'BubbleRob' plugin.\n";
         unloadSimLibrary(simLib);
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
