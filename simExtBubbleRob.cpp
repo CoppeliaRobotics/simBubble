@@ -21,7 +21,7 @@
 
 #define PLUGIN_NAME "BubbleRob"
 
-LIBRARY simLib;
+static LIBRARY simLib;
 
 struct sBubbleRob
 {
@@ -34,8 +34,17 @@ struct sBubbleRob
     char* waitUntilZero;
 };
 
-std::vector<sBubbleRob> allBubbleRobs;
-int nextBubbleRobHandle=0;
+static std::vector<sBubbleRob> allBubbleRobs;
+static int nextBubbleRobHandle=0;
+
+void outputMsg(int msgType,const char* msg)
+{
+    int plugin_verbosity = sim_verbosity_default;
+    simGetModuleInfo(PLUGIN_NAME,sim_moduleinfo_verbosity,nullptr,&plugin_verbosity);
+    if (plugin_verbosity>=msgType)
+        printf("%s\n",msg);
+}
+
 
 int getBubbleRobIndexFromHandle(int bubbleRobHandle)
 {
@@ -229,12 +238,12 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     simLib=loadSimLibrary(temp.c_str());
     if (simLib==NULL)
     {
-        std::cout << "simExtBubbleRob plugin error: could not find or correctly load coppeliaSim.dll. Cannot start 'BubbleRob' plugin.\n";
+        outputMsg(sim_verbosity_errors,"simExtBubbleRob plugin error: could not find or correctly load coppeliaSim.dll. Cannot start 'BubbleRob' plugin.");
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
     if (getSimProcAddresses(simLib)==0)
     {
-        std::cout << "simExtBubbleRob plugin error: could not find all required functions in coppeliaSim.dll. Cannot start 'BubbleRob' plugin.\n";
+        outputMsg(sim_verbosity_errors,"simExtBubbleRob plugin error: could not find all required functions in coppeliaSim.dll. Cannot start 'BubbleRob' plugin.");
         unloadSimLibrary(simLib);
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
@@ -245,7 +254,7 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     simGetIntegerParameter(sim_intparam_program_revision,&simRev);
     if( (simVer<30400) || ((simVer==30400)&&(simRev<9)) )
     {
-        std::cout << "simExtBubbleRob plugin error: sorry, your CoppeliaSim copy is somewhat old, CoppeliaSim 3.4.0 rev9 or higher is required. Cannot start 'BubbleRob' plugin.\n";
+        outputMsg(sim_verbosity_errors,"simExtBubbleRob plugin error: sorry, your CoppeliaSim copy is somewhat old, CoppeliaSim 3.4.0 rev9 or higher is required. Cannot start 'BubbleRob' plugin.");
         unloadSimLibrary(simLib);
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
