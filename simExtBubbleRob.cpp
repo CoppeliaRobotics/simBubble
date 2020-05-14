@@ -229,12 +229,12 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     simLib=loadSimLibrary(temp.c_str());
     if (simLib==NULL)
     {
-        simAddLog("Assimp",sim_verbosity_errors,"could not find or correctly load coppeliaSim.dll. Cannot start the plugin.");
+        simAddLog("BubbleRob",sim_verbosity_errors,"could not find or correctly load coppeliaSim.dll. Cannot start the plugin.");
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
     if (getSimProcAddresses(simLib)==0)
     {
-        simAddLog("Assimp",sim_verbosity_errors,"could not find all required functions in coppeliaSim.dll. Cannot start the plugin.");
+        simAddLog("BubbleRob",sim_verbosity_errors,"could not find all required functions in coppeliaSim.dll. Cannot start the plugin.");
         unloadSimLibrary(simLib);
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
