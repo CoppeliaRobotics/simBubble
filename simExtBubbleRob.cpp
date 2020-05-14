@@ -37,15 +37,6 @@ struct sBubbleRob
 static std::vector<sBubbleRob> allBubbleRobs;
 static int nextBubbleRobHandle=0;
 
-void outputMsg(int msgType,const char* msg)
-{
-    int plugin_verbosity = sim_verbosity_default;
-    simGetModuleInfo(PLUGIN_NAME,sim_moduleinfo_verbosity,nullptr,&plugin_verbosity);
-    if (plugin_verbosity>=msgType)
-        printf("%s\n",msg);
-}
-
-
 int getBubbleRobIndexFromHandle(int bubbleRobHandle)
 {
     for (unsigned int i=0;i<allBubbleRobs.size();i++)
@@ -238,12 +229,12 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     simLib=loadSimLibrary(temp.c_str());
     if (simLib==NULL)
     {
-        outputMsg(sim_verbosity_errors,"simExtBubbleRob: error: could not find or correctly load coppeliaSim.dll. Cannot start 'BubbleRob' plugin.");
+        simAddLog("Assimp",sim_verbosity_errors,"could not find or correctly load coppeliaSim.dll. Cannot start the plugin.");
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
     if (getSimProcAddresses(simLib)==0)
     {
-        outputMsg(sim_verbosity_errors,"simExtBubbleRob: error: could not find all required functions in coppeliaSim.dll. Cannot start 'BubbleRob' plugin.");
+        simAddLog("Assimp",sim_verbosity_errors,"could not find all required functions in coppeliaSim.dll. Cannot start the plugin.");
         unloadSimLibrary(simLib);
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
