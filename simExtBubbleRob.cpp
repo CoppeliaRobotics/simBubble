@@ -29,9 +29,8 @@ struct sBubbleRob
     int motorHandles[2];
     int sensorHandle;
     float backRelativeVelocities[2];
-    float duration;
+    bool run;
     float backMovementDuration;
-    char* waitUntilZero;
 };
 
 static std::vector<sBubbleRob> allBubbleRobs;
@@ -74,8 +73,7 @@ void LUA_CREATE_CALLBACK(SScriptCallBack* cb)
         bubbleRob.sensorHandle=inData->at(1).int32Data[0];
         bubbleRob.backRelativeVelocities[0]=inData->at(2).floatData[0];
         bubbleRob.backRelativeVelocities[1]=inData->at(2).floatData[1];
-        bubbleRob.waitUntilZero=NULL;
-        bubbleRob.duration=0.0f;
+        bubbleRob.run=false;
         allBubbleRobs.push_back(bubbleRob);
     }
     D.pushOutData(CScriptFunctionDataItem(handle));
@@ -104,8 +102,6 @@ void LUA_DESTROY_CALLBACK(SScriptCallBack* cb)
         int index=getBubbleRobIndexFromHandle(handle);
         if (index>=0)
         {
-            if (allBubbleRobs[index].waitUntilZero!=NULL)
-                allBubbleRobs[index].waitUntilZero[0]=0; // free the blocked thread
             allBubbleRobs.erase(allBubbleRobs.begin()+index);
             success=true;
         }
@@ -124,34 +120,23 @@ void LUA_DESTROY_CALLBACK(SScriptCallBack* cb)
 #define LUA_START_COMMAND "simBubble.start"
 
 const int inArgs_START[]={
-    3,
+    1,
     sim_script_arg_int32,0,
-    sim_script_arg_float,0,
-    sim_script_arg_bool,0,
 };
 
 void LUA_START_CALLBACK(SScriptCallBack* cb)
 {
     CScriptFunctionData D;
     bool success=false;
-    if (D.readDataFromStack(cb->stackID,inArgs_START,inArgs_START[0]-1,LUA_START_COMMAND)) // -1 because the last argument is optional
+    if (D.readDataFromStack(cb->stackID,inArgs_START,inArgs_START[0],LUA_START_COMMAND))
     {
         std::vector<CScriptFunctionDataItem>* inData=D.getInDataPtr();
         int handle=inData->at(0).int32Data[0];
-        float duration=inData->at(1).floatData[0];
-        bool leaveDirectly=false;
-        if (inData->size()>2)
-            leaveDirectly=inData->at(2).boolData[0];
         int index=getBubbleRobIndexFromHandle(handle);
         if (index!=-1)
         {
-            if (duration<=0.0f)
-                leaveDirectly=true;
             allBubbleRobs[index].backMovementDuration=0.0f;
-            allBubbleRobs[index].duration=duration;
-            if (!leaveDirectly)
-                cb->waitUntilZero=1; // the effect of this is that when we leave the callback, the Lua script gets control
-                                    // back only when this value turns zero. This allows for "blocking" functions 
+            allBubbleRobs[index].run=true;
             success=true;
         }
         else
@@ -183,12 +168,9 @@ void LUA_STOP_CALLBACK(SScriptCallBack* cb)
         int index=getBubbleRobIndexFromHandle(handle);
         if (index!=-1)
         {
-            if (allBubbleRobs[index].waitUntilZero!=NULL)
-            {
-                allBubbleRobs[index].waitUntilZero[0]=0; // free the blocked thread
-                allBubbleRobs[index].waitUntilZero=NULL;
-            }
-            allBubbleRobs[index].duration=0.0f;
+            allBubbleRobs[index].run=false;
+            simSetJointTargetVelocity(allBubbleRobs[index].motorHandles[0],0.0f);
+            simSetJointTargetVelocity(allBubbleRobs[index].motorHandles[1],0.0f);
             success=true;
         }
         else
@@ -244,20 +226,10 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     // Register the new functions:
     simRegisterScriptCallbackFunction(strConCat(LUA_CREATE_COMMAND,"@",PLUGIN_NAME),strConCat("number bubbleRobHandle=",LUA_CREATE_COMMAND,"(table_2 motorJointHandles,number sensorHandle,table_2 backRelativeVelocities)"),LUA_CREATE_CALLBACK);
     simRegisterScriptCallbackFunction(strConCat(LUA_DESTROY_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_DESTROY_COMMAND,"(number bubbleRobHandle)"),LUA_DESTROY_CALLBACK);
-    simRegisterScriptCallbackFunction(strConCat(LUA_START_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_START_COMMAND,"(number bubbleRobHandle,number duration,boolean returnDirectly=false)"),LUA_START_CALLBACK);
+    simRegisterScriptCallbackFunction(strConCat(LUA_START_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_START_COMMAND,"(number bubbleRobHandle)"),LUA_START_CALLBACK);
     simRegisterScriptCallbackFunction(strConCat(LUA_STOP_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_STOP_COMMAND,"(number bubbleRobHandle)"),LUA_STOP_CALLBACK);
 
-    // Following for backward compatibility:
-    simRegisterScriptVariable("simExtBubble_create",LUA_CREATE_COMMAND,-1);
-    simRegisterScriptCallbackFunction(strConCat("simExtBubble_create","@",PLUGIN_NAME),strConCat("Please use the ",LUA_CREATE_COMMAND," notation instead"),0);
-    simRegisterScriptVariable("simExtBubble_destroy",LUA_DESTROY_COMMAND,-1);
-    simRegisterScriptCallbackFunction(strConCat("simExtBubble_destroy","@",PLUGIN_NAME),strConCat("Please use the ",LUA_DESTROY_COMMAND," notation instead"),0);
-    simRegisterScriptVariable("simExtBubble_start",LUA_START_COMMAND,-1);
-    simRegisterScriptCallbackFunction(strConCat("simExtBubble_start","@",PLUGIN_NAME),strConCat("Please use the ",LUA_START_COMMAND," notation instead"),0);
-    simRegisterScriptVariable("simExtBubble_stop",LUA_STOP_COMMAND,-1);
-    simRegisterScriptCallbackFunction(strConCat("simExtBubble_stop","@",PLUGIN_NAME),strConCat("Please use the ",LUA_STOP_COMMAND," notation instead"),0);
-
-    return(9); // initialization went fine, we return the version number of this plugin (can be queried with simGetModuleName)
+    return(10); // initialization went fine, we return the version number of this plugin (can be queried with simGetModuleName)
     // version 1 was for CoppeliaSim versions before CoppeliaSim 2.5.12
     // version 2 was for CoppeliaSim versions before CoppeliaSim 2.6.0
     // version 5 was for CoppeliaSim versions before CoppeliaSim 3.1.0
@@ -265,6 +237,7 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     // version 7 is for CoppeliaSim versions after CoppeliaSim 3.2.0 (completely rewritten)
     // version 8 is for CoppeliaSim versions after CoppeliaSim 3.3.0 (using stacks for data exchange with scripts)
     // version 9 is for CoppeliaSim versions after CoppeliaSim 3.4.0 (new API notation)
+    // version 10 is for CoppeliaSim versions after CoppeliaSim 4.1.0 (threads via coroutines)
 }
 
 SIM_DLLEXPORT void simEnd()
@@ -288,7 +261,7 @@ SIM_DLLEXPORT void* simMessage(int message,int* auxiliaryData,void* customData,i
             float dt=simGetSimulationTimeStep();
             for (unsigned int i=0;i<allBubbleRobs.size();i++)
             {
-                if (allBubbleRobs[i].duration>0.0f)
+                if (allBubbleRobs[i].run)
                 { // movement mode
                     if (simReadProximitySensor(allBubbleRobs[i].sensorHandle,NULL,NULL,NULL)>0)
                         allBubbleRobs[i].backMovementDuration=3.0f; // we detected an obstacle, we move backward for 3 seconds
@@ -303,17 +276,6 @@ SIM_DLLEXPORT void* simMessage(int message,int* auxiliaryData,void* customData,i
                         simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],3.1415f);
                         simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],3.1415f);
                     }
-                    allBubbleRobs[i].duration-=dt;
-                }
-                else
-                { // stopped mode
-                    if (allBubbleRobs[i].waitUntilZero!=NULL)
-                    {
-                        allBubbleRobs[i].waitUntilZero[0]=0;
-                        allBubbleRobs[i].waitUntilZero=NULL;
-                    }
-                    simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],0.0f);
-                    simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],0.0f);
                 }
             }
         }
