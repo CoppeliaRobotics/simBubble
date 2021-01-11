@@ -267,14 +267,14 @@ SIM_DLLEXPORT void* simMessage(int message,int* auxiliaryData,void* customData,i
                         allBubbleRobs[i].backMovementDuration=3.0f; // we detected an obstacle, we move backward for 3 seconds
                     if (allBubbleRobs[i].backMovementDuration>0.0f)
                     { // We move backward
-                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],-3.1415f*allBubbleRobs[i].backRelativeVelocities[0]);
-                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],-3.1415f*allBubbleRobs[i].backRelativeVelocities[1]);
+                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],-7.0f*allBubbleRobs[i].backRelativeVelocities[0]);
+                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],-7.0f*allBubbleRobs[i].backRelativeVelocities[1]);
                         allBubbleRobs[i].backMovementDuration-=dt;
                     }
                     else
                     { // We move forward
-                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],3.1415f);
-                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],3.1415f);
+                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],7.0f);
+                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],7.0f);
                     }
                 }
             }
