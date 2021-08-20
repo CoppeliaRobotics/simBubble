@@ -10,11 +10,11 @@
         #include <shlwapi.h>
         #pragma comment(lib, "Shlwapi.lib")
     #endif
-#endif /* _WIN32 */
+#endif
 #if defined (__linux) || defined (__APPLE__)
     #include <unistd.h>
     #define WIN_AFX_MANAGE_STATE
-#endif /* __linux || __APPLE__ */
+#endif
 
 #define CONCAT(x,y,z) x y z
 #define strConCat(x,y,z)    CONCAT(x,y,z)
@@ -26,6 +26,7 @@ static LIBRARY simLib;
 struct sBubbleRob
 {
     int handle;
+    int scriptHandle;
     int motorHandles[2];
     int sensorHandle;
     float backRelativeVelocities[2];
@@ -38,9 +39,19 @@ static int nextBubbleRobHandle=0;
 
 int getBubbleRobIndexFromHandle(int bubbleRobHandle)
 {
-    for (unsigned int i=0;i<allBubbleRobs.size();i++)
+    for (size_t i=0;i<allBubbleRobs.size();i++)
     {
         if (allBubbleRobs[i].handle==bubbleRobHandle)
+            return(i);
+    }
+    return(-1);
+}
+
+int getBubbleRobIndexFromScriptHandle(int scriptHandle)
+{
+    for (size_t i=0;i<allBubbleRobs.size();i++)
+    {
+        if (allBubbleRobs[i].scriptHandle==scriptHandle)
             return(i);
     }
     return(-1);
@@ -68,6 +79,7 @@ void LUA_CREATE_CALLBACK(SScriptCallBack* cb)
         sBubbleRob bubbleRob;
         handle=nextBubbleRobHandle++;
         bubbleRob.handle=handle;
+        bubbleRob.scriptHandle=cb->scriptID;
         bubbleRob.motorHandles[0]=inData->at(0).int32Data[0];
         bubbleRob.motorHandles[1]=inData->at(0).int32Data[1];
         bubbleRob.sensorHandle=inData->at(1).int32Data[0];
@@ -181,8 +193,7 @@ void LUA_STOP_CALLBACK(SScriptCallBack* cb)
 }
 // --------------------------------------------------------------------------------------
 
-
-SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
+SIM_DLLEXPORT unsigned char simStart(void*,int)
 { // This is called just once, at the start of CoppeliaSim.
     // Dynamically load and bind CoppeliaSim functions:
     char curDirAndFile[1024];
@@ -206,7 +217,7 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     temp+="/libcoppeliaSim.so";
 #elif defined (__APPLE__)
     temp+="/libcoppeliaSim.dylib";
-#endif /* __linux || __APPLE__ */
+#endif
 
     simLib=loadSimLibrary(temp.c_str());
     if (simLib==NULL)
@@ -229,15 +240,11 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
     simRegisterScriptCallbackFunction(strConCat(LUA_START_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_START_COMMAND,"(number bubbleRobHandle)"),LUA_START_CALLBACK);
     simRegisterScriptCallbackFunction(strConCat(LUA_STOP_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_STOP_COMMAND,"(number bubbleRobHandle)"),LUA_STOP_CALLBACK);
 
-    return(10); // initialization went fine, we return the version number of this plugin (can be queried with simGetModuleName)
-    // version 1 was for CoppeliaSim versions before CoppeliaSim 2.5.12
-    // version 2 was for CoppeliaSim versions before CoppeliaSim 2.6.0
-    // version 5 was for CoppeliaSim versions before CoppeliaSim 3.1.0
-    // version 6 is for CoppeliaSim versions after CoppeliaSim 3.1.3
-    // version 7 is for CoppeliaSim versions after CoppeliaSim 3.2.0 (completely rewritten)
+    return(11); // initialization went fine, we return the version number of this plugin (can be queried with simGetModuleName)
     // version 8 is for CoppeliaSim versions after CoppeliaSim 3.3.0 (using stacks for data exchange with scripts)
     // version 9 is for CoppeliaSim versions after CoppeliaSim 3.4.0 (new API notation)
     // version 10 is for CoppeliaSim versions after CoppeliaSim 4.1.0 (threads via coroutines)
+    // version 11 is for CoppeliaSim versions after CoppeliaSim 4.2.0
 }
 
 SIM_DLLEXPORT void simEnd()
@@ -247,45 +254,41 @@ SIM_DLLEXPORT void simEnd()
 
 SIM_DLLEXPORT void* simMessage(int message,int* auxiliaryData,void* customData,int* replyData)
 { // This is called quite often. Just watch out for messages/events you want to handle
-    // This function should not generate any error messages:
-    int errorModeSaved;
-    simGetIntegerParameter(sim_intparam_error_report_mode,&errorModeSaved);
-    simSetIntegerParameter(sim_intparam_error_report_mode,sim_api_errormessage_ignore);
-
     void* retVal=NULL;
 
-    if (message==sim_message_eventcallback_modulehandle)
-    {
-        if ( (customData==NULL)||(std::string("BubbleRob").compare((char*)customData)==0) ) // is the command also meant for BubbleRob?
+    if ( (message==sim_message_eventcallback_simulationactuation)&&(auxiliaryData[0]==0) )
+    { // the main script's actuation section is about to be executed
+        float dt=simGetSimulationTimeStep();
+        for (unsigned int i=0;i<allBubbleRobs.size();i++)
         {
-            float dt=simGetSimulationTimeStep();
-            for (unsigned int i=0;i<allBubbleRobs.size();i++)
-            {
-                if (allBubbleRobs[i].run)
-                { // movement mode
-                    if (simReadProximitySensor(allBubbleRobs[i].sensorHandle,NULL,NULL,NULL)>0)
-                        allBubbleRobs[i].backMovementDuration=3.0f; // we detected an obstacle, we move backward for 3 seconds
-                    if (allBubbleRobs[i].backMovementDuration>0.0f)
-                    { // We move backward
-                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],-7.0f*allBubbleRobs[i].backRelativeVelocities[0]);
-                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],-7.0f*allBubbleRobs[i].backRelativeVelocities[1]);
-                        allBubbleRobs[i].backMovementDuration-=dt;
-                    }
-                    else
-                    { // We move forward
-                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],7.0f);
-                        simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],7.0f);
-                    }
+            if (allBubbleRobs[i].run)
+            { // movement mode
+                if (simReadProximitySensor(allBubbleRobs[i].sensorHandle,NULL,NULL,NULL)>0)
+                    allBubbleRobs[i].backMovementDuration=3.0f; // we detected an obstacle, we move backward for 3 seconds
+                if (allBubbleRobs[i].backMovementDuration>0.0f)
+                { // We move backward
+                    simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],-7.0f*allBubbleRobs[i].backRelativeVelocities[0]);
+                    simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],-7.0f*allBubbleRobs[i].backRelativeVelocities[1]);
+                    allBubbleRobs[i].backMovementDuration-=dt;
+                }
+                else
+                { // We move forward
+                    simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[0],7.0f);
+                    simSetJointTargetVelocity(allBubbleRobs[i].motorHandles[1],7.0f);
                 }
             }
         }
     }
 
-    if (message==sim_message_eventcallback_simulationended)
-    { // simulation ended. Destroy all BubbleRob instances:
-        allBubbleRobs.clear();
+    if (message==sim_message_eventcallback_scriptstatedestroyed)
+    { // script state was destroyed. Destroy all associated BubbleRob instances:
+        int index=getBubbleRobIndexFromScriptHandle(auxiliaryData[0]);
+        while (index>=0)
+        {
+            allBubbleRobs.erase(allBubbleRobs.begin()+index);
+            index=getBubbleRobIndexFromScriptHandle(auxiliaryData[0]);
+        }
     }
 
-    simSetIntegerParameter(sim_intparam_error_report_mode,errorModeSaved); // restore previous settings
     return(retVal);
 }
