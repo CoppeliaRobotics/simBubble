@@ -232,8 +232,6 @@ SIM_DLLEXPORT unsigned char simStart(void*,int)
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
 
-    simRegisterScriptVariable("simBubble","require('simExtBubbleRob')",0);
-
     // Register the new functions:
     simRegisterScriptCallbackFunction(strConCat(LUA_CREATE_COMMAND,"@",PLUGIN_NAME),strConCat("number bubbleRobHandle=",LUA_CREATE_COMMAND,"(table_2 motorJointHandles,number sensorHandle,table_2 backRelativeVelocities)"),LUA_CREATE_CALLBACK);
     simRegisterScriptCallbackFunction(strConCat(LUA_DESTROY_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_DESTROY_COMMAND,"(number bubbleRobHandle)"),LUA_DESTROY_CALLBACK);
