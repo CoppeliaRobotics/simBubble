@@ -233,16 +233,17 @@ SIM_DLLEXPORT unsigned char simStart(void*,int)
     }
 
     // Register the new functions:
-    simRegisterScriptCallbackFunction(strConCat(LUA_CREATE_COMMAND,"@",PLUGIN_NAME),strConCat("number bubbleRobHandle=",LUA_CREATE_COMMAND,"(table_2 motorJointHandles,number sensorHandle,table_2 backRelativeVelocities)"),LUA_CREATE_CALLBACK);
-    simRegisterScriptCallbackFunction(strConCat(LUA_DESTROY_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_DESTROY_COMMAND,"(number bubbleRobHandle)"),LUA_DESTROY_CALLBACK);
-    simRegisterScriptCallbackFunction(strConCat(LUA_START_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_START_COMMAND,"(number bubbleRobHandle)"),LUA_START_CALLBACK);
-    simRegisterScriptCallbackFunction(strConCat(LUA_STOP_COMMAND,"@",PLUGIN_NAME),strConCat("boolean result=",LUA_STOP_COMMAND,"(number bubbleRobHandle)"),LUA_STOP_CALLBACK);
+    simRegisterScriptCallbackFunction(strConCat(LUA_CREATE_COMMAND,"@",PLUGIN_NAME),strConCat("int bubbleRobHandle=",LUA_CREATE_COMMAND,"(int[2] motorJointHandles,int sensorHandle,float[2] backRelativeVelocities)"),LUA_CREATE_CALLBACK);
+    simRegisterScriptCallbackFunction(strConCat(LUA_DESTROY_COMMAND,"@",PLUGIN_NAME),strConCat("bool result=",LUA_DESTROY_COMMAND,"(int bubbleRobHandle)"),LUA_DESTROY_CALLBACK);
+    simRegisterScriptCallbackFunction(strConCat(LUA_START_COMMAND,"@",PLUGIN_NAME),strConCat("bool result=",LUA_START_COMMAND,"(int bubbleRobHandle)"),LUA_START_CALLBACK);
+    simRegisterScriptCallbackFunction(strConCat(LUA_STOP_COMMAND,"@",PLUGIN_NAME),strConCat("bool result=",LUA_STOP_COMMAND,"(int bubbleRobHandle)"),LUA_STOP_CALLBACK);
 
     return(11); // initialization went fine, we return the version number of this plugin (can be queried with simGetModuleName)
     // version 8 is for CoppeliaSim versions after CoppeliaSim 3.3.0 (using stacks for data exchange with scripts)
     // version 9 is for CoppeliaSim versions after CoppeliaSim 3.4.0 (new API notation)
     // version 10 is for CoppeliaSim versions after CoppeliaSim 4.1.0 (threads via coroutines)
     // version 11 is for CoppeliaSim versions after CoppeliaSim 4.2.0
+    // version 12 is for CoppeliaSim versions after CoppeliaSim 4.3.0
 }
 
 SIM_DLLEXPORT void simEnd()
