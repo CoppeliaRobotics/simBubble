@@ -62,7 +62,7 @@ HEADERS += \
 
 SOURCES += \
     simExtBubbleRob.cpp \
-    ../common/scriptFunctionData.cpp \
-    ../common/scriptFunctionDataItem.cpp \
-    ../common/simLib.cpp
+    ../include/scriptFunctionData.cpp \
+    ../include/scriptFunctionDataItem.cpp \
+    ../include/simLib.cpp
 
