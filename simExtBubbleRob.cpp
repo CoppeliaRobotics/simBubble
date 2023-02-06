@@ -1,7 +1,7 @@
 #include "simExtBubbleRob.h"
-#include <scriptFunctionData.h>
+#include <simLib/scriptFunctionData.h>
 #include <iostream>
-#include <simLib.h>
+#include <simLib/simLib.h>
 
 #ifdef _WIN32
     #ifdef QT_COMPIL

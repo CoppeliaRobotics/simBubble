@@ -21,6 +21,6 @@ coppeliasim_add_plugin(
     LEGACY
     SOURCES
     simExtBubbleRob.cpp
-    ${COPPELIASIM_INCLUDE_DIR}/scriptFunctionData.cpp
-    ${COPPELIASIM_INCLUDE_DIR}/scriptFunctionDataItem.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simLib/scriptFunctionData.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simLib/scriptFunctionDataItem.cpp
 )
