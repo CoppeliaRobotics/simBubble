@@ -56,13 +56,13 @@ unix:!symbian {
 
 HEADERS += \
     simExtBubbleRob.h \
-    ../include/scriptFunctionData.h \
-    ../include/scriptFunctionDataItem.h \
-    ../include/simLib.h 
+    ../include/simLib/scriptFunctionData.h \
+    ../include/simLib/scriptFunctionDataItem.h \
+    ../include/simLib/simLib.h 
 
 SOURCES += \
     simExtBubbleRob.cpp \
-    ../include/scriptFunctionData.cpp \
-    ../include/scriptFunctionDataItem.cpp \
-    ../include/simLib.cpp
+    ../include/simLib/scriptFunctionData.cpp \
+    ../include/simLib/scriptFunctionDataItem.cpp \
+    ../include/simLib/simLib.cpp
 
