@@ -16,6 +16,7 @@ INCLUDEPATH += "../include"
 *-g++* {
     QMAKE_CXXFLAGS += -O3
     QMAKE_CXXFLAGS += -Wall
+    QMAKE_CXXFLAGS += -fvisibility=hidden
     QMAKE_CXXFLAGS += -Wno-unused-parameter
     QMAKE_CXXFLAGS += -Wno-strict-aliasing
     QMAKE_CXXFLAGS += -Wno-empty-body
