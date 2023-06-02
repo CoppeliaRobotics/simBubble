@@ -5,7 +5,7 @@ copying, etc.) contained in the same directory if it is present, or
 under the same terms of the files in the parent directory otherwise.
 
 -----------------------------------------------------------------------
-simExtBubbleRob, based on v_repExtBubbleRob from Coppelia Robotics AG
+simBubble, based on v_repExtBubbleRob from Coppelia Robotics AG
 on September 2019
 
 Copyright (C) 2011-2023 Coppelia Robotics AG

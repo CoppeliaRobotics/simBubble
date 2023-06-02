@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(simExtBubbleRob)
+project(simBubble)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_MACOSX_RPATH 1)
@@ -17,10 +17,12 @@ list(APPEND CMAKE_MODULE_PATH ${COPPELIASIM_INCLUDE_DIR}/cmake)
 find_package(CoppeliaSim 4.5.0.0 REQUIRED)
 
 coppeliasim_add_plugin(
-    simExtBubbleRob
+    simBubble
     LEGACY
     SOURCES
-    simExtBubbleRob.cpp
+    simBubble.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simLib/scriptFunctionData.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simLib/scriptFunctionDataItem.cpp
 )
+coppeliasim_add_lua(simBubble.lua)
+coppeliasim_add_lua(simBubble-ce.lua)

@@ -1,4 +1,4 @@
-#include "simExtBubbleRob.h"
+#include "simBubble.h"
 #include <simLib/scriptFunctionData.h>
 #include <iostream>
 #include <simLib/simLib.h>
@@ -15,11 +15,6 @@
     #include <unistd.h>
     #define WIN_AFX_MANAGE_STATE
 #endif
-
-#define CONCAT(x,y,z) x y z
-#define strConCat(x,y,z)    CONCAT(x,y,z)
-
-#define PLUGIN_NAME "BubbleRob"
 
 static LIBRARY simLib;
 
@@ -58,10 +53,8 @@ int getBubbleRobIndexFromScriptHandle(int scriptHandle)
 }
 
 // --------------------------------------------------------------------------------------
-// simExtBubble_create
+// simBubble.create
 // --------------------------------------------------------------------------------------
-#define LUA_CREATE_COMMAND "simBubble.create"
-
 const int inArgs_CREATE[]={
     3,
     sim_script_arg_int32|sim_script_arg_table,2,
@@ -73,7 +66,7 @@ void LUA_CREATE_CALLBACK(SScriptCallBack* cb)
 {
     CScriptFunctionData D;
     int handle=-1;
-    if (D.readDataFromStack(cb->stackID,inArgs_CREATE,inArgs_CREATE[0],LUA_CREATE_COMMAND))
+    if (D.readDataFromStack(cb->stackID,inArgs_CREATE,inArgs_CREATE[0],nullptr))
     {
         std::vector<CScriptFunctionDataItem>* inData=D.getInDataPtr();
         sBubbleRob bubbleRob;
@@ -94,10 +87,8 @@ void LUA_CREATE_CALLBACK(SScriptCallBack* cb)
 // --------------------------------------------------------------------------------------
 
 // --------------------------------------------------------------------------------------
-// simExtBubble_destroy
+// simBubble.destroy
 // --------------------------------------------------------------------------------------
-#define LUA_DESTROY_COMMAND "simBubble.destroy"
-
 const int inArgs_DESTROY[]={
     1,
     sim_script_arg_int32,0,
@@ -107,7 +98,7 @@ void LUA_DESTROY_CALLBACK(SScriptCallBack* cb)
 {
     CScriptFunctionData D;
     bool success=false;
-    if (D.readDataFromStack(cb->stackID,inArgs_DESTROY,inArgs_DESTROY[0],LUA_DESTROY_COMMAND))
+    if (D.readDataFromStack(cb->stackID,inArgs_DESTROY,inArgs_DESTROY[0],nullptr))
     {
         std::vector<CScriptFunctionDataItem>* inData=D.getInDataPtr();
         int handle=inData->at(0).int32Data[0];
@@ -118,7 +109,7 @@ void LUA_DESTROY_CALLBACK(SScriptCallBack* cb)
             success=true;
         }
         else
-            simSetLastError(LUA_DESTROY_COMMAND,"Invalid BubbleRob handle.");
+            simSetLastError(nullptr,"Invalid BubbleRob handle.");
     }
     D.pushOutData(CScriptFunctionDataItem(success));
     D.writeDataToStack(cb->stackID);
@@ -127,10 +118,8 @@ void LUA_DESTROY_CALLBACK(SScriptCallBack* cb)
 
 
 // --------------------------------------------------------------------------------------
-// simExtBubble_start
+// simBubble.start
 // --------------------------------------------------------------------------------------
-#define LUA_START_COMMAND "simBubble.start"
-
 const int inArgs_START[]={
     1,
     sim_script_arg_int32,0,
@@ -140,7 +129,7 @@ void LUA_START_CALLBACK(SScriptCallBack* cb)
 {
     CScriptFunctionData D;
     bool success=false;
-    if (D.readDataFromStack(cb->stackID,inArgs_START,inArgs_START[0],LUA_START_COMMAND))
+    if (D.readDataFromStack(cb->stackID,inArgs_START,inArgs_START[0],nullptr))
     {
         std::vector<CScriptFunctionDataItem>* inData=D.getInDataPtr();
         int handle=inData->at(0).int32Data[0];
@@ -152,7 +141,7 @@ void LUA_START_CALLBACK(SScriptCallBack* cb)
             success=true;
         }
         else
-            simSetLastError(LUA_START_COMMAND,"Invalid BubbleRob handle.");
+            simSetLastError(nullptr,"Invalid BubbleRob handle.");
     }
     D.pushOutData(CScriptFunctionDataItem(success));
     D.writeDataToStack(cb->stackID);
@@ -160,10 +149,8 @@ void LUA_START_CALLBACK(SScriptCallBack* cb)
 // --------------------------------------------------------------------------------------
 
 // --------------------------------------------------------------------------------------
-// simExtBubble_stop
+// simBubble.stop
 // --------------------------------------------------------------------------------------
-#define LUA_STOP_COMMAND "simBubble.stop"
-
 const int inArgs_STOP[]={
     1,
     sim_script_arg_int32,0,
@@ -173,7 +160,7 @@ void LUA_STOP_CALLBACK(SScriptCallBack* cb)
 {
     CScriptFunctionData D;
     bool success=false;
-    if (D.readDataFromStack(cb->stackID,inArgs_STOP,inArgs_STOP[0],LUA_STOP_COMMAND))
+    if (D.readDataFromStack(cb->stackID,inArgs_STOP,inArgs_STOP[0],nullptr))
     {
         std::vector<CScriptFunctionDataItem>* inData=D.getInDataPtr();
         int handle=inData->at(0).int32Data[0];
@@ -186,14 +173,14 @@ void LUA_STOP_CALLBACK(SScriptCallBack* cb)
             success=true;
         }
         else
-            simSetLastError(LUA_STOP_COMMAND,"Invalid BubbleRob handle.");
+            simSetLastError(nullptr,"Invalid BubbleRob handle.");
     }
     D.pushOutData(CScriptFunctionDataItem(success));
     D.writeDataToStack(cb->stackID);
 }
 // --------------------------------------------------------------------------------------
 
-SIM_DLLEXPORT unsigned char simStart(void*,int)
+SIM_DLLEXPORT int simInit(const char* pluginName)
 { // This is called just once, at the start of CoppeliaSim.
     // Dynamically load and bind CoppeliaSim functions:
     char curDirAndFile[1024];
@@ -222,40 +209,39 @@ SIM_DLLEXPORT unsigned char simStart(void*,int)
     simLib=loadSimLibrary(temp.c_str());
     if (simLib==NULL)
     {
-        printf("simExtBubbleRob: error: could not find or correctly load coppeliaSim.dll. Cannot start the plugin.\n"); // cannot use simAddLog here.
+        simAddLog(pluginName,sim_verbosity_errors,"could not find all required functions in the CoppeliaSim library. Cannot start the plugin.");
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
     if (getSimProcAddresses(simLib)==0)
     {
-        printf("simExtBubbleRob: error: could not find all required functions in coppeliaSim.dll. Cannot start the plugin.\n"); // cannot use simAddLog here.
+        simAddLog(pluginName,sim_verbosity_errors,"sorry, your CoppelisSim copy is somewhat old, CoppelisSim 4.0.0 rev1 or higher is required. Cannot start the plugin.");
         unloadSimLibrary(simLib);
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
 
     // Register the new functions:
-    simRegisterScriptCallbackFunction(strConCat(LUA_CREATE_COMMAND,"@",PLUGIN_NAME),strConCat("int bubbleRobHandle=",LUA_CREATE_COMMAND,"(int[2] motorJointHandles,int sensorHandle,float[2] backRelativeVelocities)"),LUA_CREATE_CALLBACK);
-    simRegisterScriptCallbackFunction(strConCat(LUA_DESTROY_COMMAND,"@",PLUGIN_NAME),strConCat("bool result=",LUA_DESTROY_COMMAND,"(int bubbleRobHandle)"),LUA_DESTROY_CALLBACK);
-    simRegisterScriptCallbackFunction(strConCat(LUA_START_COMMAND,"@",PLUGIN_NAME),strConCat("bool result=",LUA_START_COMMAND,"(int bubbleRobHandle)"),LUA_START_CALLBACK);
-    simRegisterScriptCallbackFunction(strConCat(LUA_STOP_COMMAND,"@",PLUGIN_NAME),strConCat("bool result=",LUA_STOP_COMMAND,"(int bubbleRobHandle)"),LUA_STOP_CALLBACK);
+    simRegisterScriptCallbackFunction("create",nullptr,LUA_CREATE_CALLBACK);
+    simRegisterScriptCallbackFunction("destroy",nullptr,LUA_DESTROY_CALLBACK);
+    simRegisterScriptCallbackFunction("start",nullptr,LUA_START_CALLBACK);
+    simRegisterScriptCallbackFunction("stop",nullptr,LUA_STOP_CALLBACK);
 
-    return(11); // initialization went fine, we return the version number of this plugin (can be queried with simGetModuleName)
+    return(13); // initialization went fine, we return the version number of this plugin (can be queried with simGetModuleName)
     // version 8 is for CoppeliaSim versions after CoppeliaSim 3.3.0 (using stacks for data exchange with scripts)
     // version 9 is for CoppeliaSim versions after CoppeliaSim 3.4.0 (new API notation)
     // version 10 is for CoppeliaSim versions after CoppeliaSim 4.1.0 (threads via coroutines)
     // version 11 is for CoppeliaSim versions after CoppeliaSim 4.2.0
     // version 12 is for CoppeliaSim versions after CoppeliaSim 4.3.0
+    // version 13 is for CoppeliaSim versions after CoppeliaSim 4.5.1
 }
 
-SIM_DLLEXPORT void simEnd()
+SIM_DLLEXPORT void simCleanup()
 { // This is called just once, at the end of CoppeliaSim
     unloadSimLibrary(simLib); // release the library
 }
 
-SIM_DLLEXPORT void* simMessage(int message,int* auxiliaryData,void* customData,int* replyData)
+SIM_DLLEXPORT void simMsg(int message,int* auxData,void* pointerData)
 { // This is called quite often. Just watch out for messages/events you want to handle
-    void* retVal=NULL;
-
-    if ( (message==sim_message_eventcallback_simulationactuation)&&(auxiliaryData[0]==0) )
+    if ( (message==sim_message_eventcallback_simulationactuation)&&(auxData[0]==0) )
     { // the main script's actuation section is about to be executed
         float dt=simGetSimulationTimeStep();
         for (unsigned int i=0;i<allBubbleRobs.size();i++)
@@ -281,13 +267,11 @@ SIM_DLLEXPORT void* simMessage(int message,int* auxiliaryData,void* customData,i
 
     if (message==sim_message_eventcallback_scriptstatedestroyed)
     { // script state was destroyed. Destroy all associated BubbleRob instances:
-        int index=getBubbleRobIndexFromScriptHandle(auxiliaryData[0]);
+        int index=getBubbleRobIndexFromScriptHandle(auxData[0]);
         while (index>=0)
         {
             allBubbleRobs.erase(allBubbleRobs.begin()+index);
-            index=getBubbleRobIndexFromScriptHandle(auxiliaryData[0]);
+            index=getBubbleRobIndexFromScriptHandle(auxData[0]);
         }
     }
-
-    return(retVal);
 }
