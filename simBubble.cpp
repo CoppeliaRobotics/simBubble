@@ -3,19 +3,6 @@
 #include <iostream>
 #include <simLib/simLib.h>
 
-#ifdef _WIN32
-    #ifdef QT_COMPIL
-        #include <direct.h>
-    #else
-        #include <shlwapi.h>
-        #pragma comment(lib, "Shlwapi.lib")
-    #endif
-#endif
-#if defined (__linux) || defined (__APPLE__)
-    #include <unistd.h>
-    #define WIN_AFX_MANAGE_STATE
-#endif
-
 static LIBRARY simLib;
 
 struct sBubbleRob
@@ -180,41 +167,17 @@ void LUA_STOP_CALLBACK(SScriptCallBack* cb)
 }
 // --------------------------------------------------------------------------------------
 
-SIM_DLLEXPORT int simInit(const char* pluginName)
+SIM_DLLEXPORT int simInit(SSimInit* info)
 { // This is called just once, at the start of CoppeliaSim.
-    // Dynamically load and bind CoppeliaSim functions:
-    char curDirAndFile[1024];
-#ifdef _WIN32
-    #ifdef QT_COMPIL
-        _getcwd(curDirAndFile, sizeof(curDirAndFile));
-    #else
-        GetModuleFileName(NULL,curDirAndFile,1023);
-        PathRemoveFileSpec(curDirAndFile);
-    #endif
-#elif defined (__linux) || defined (__APPLE__)
-    getcwd(curDirAndFile, sizeof(curDirAndFile));
-#endif
-
-    std::string currentDirAndPath(curDirAndFile);
-    std::string temp(currentDirAndPath);
-
-#ifdef _WIN32
-    temp+="\\coppeliaSim.dll";
-#elif defined (__linux)
-    temp+="/libcoppeliaSim.so";
-#elif defined (__APPLE__)
-    temp+="/libcoppeliaSim.dylib";
-#endif
-
-    simLib=loadSimLibrary(temp.c_str());
+    simLib=loadSimLibrary(info->coppeliaSimLibPath);
     if (simLib==NULL)
     {
-        simAddLog(pluginName,sim_verbosity_errors,"could not find all required functions in the CoppeliaSim library. Cannot start the plugin.");
+        simAddLog(info->pluginName,sim_verbosity_errors,"could not find all required functions in the CoppeliaSim library. Cannot start the plugin.");
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
     if (getSimProcAddresses(simLib)==0)
     {
-        simAddLog(pluginName,sim_verbosity_errors,"sorry, your CoppelisSim copy is somewhat old, CoppelisSim 4.0.0 rev1 or higher is required. Cannot start the plugin.");
+        simAddLog(info->pluginName,sim_verbosity_errors,"sorry, your CoppelisSim copy is somewhat old, CoppelisSim 4.0.0 rev1 or higher is required. Cannot start the plugin.");
         unloadSimLibrary(simLib);
         return(0); // Means error, CoppeliaSim will unload this plugin
     }
@@ -239,9 +202,9 @@ SIM_DLLEXPORT void simCleanup()
     unloadSimLibrary(simLib); // release the library
 }
 
-SIM_DLLEXPORT void simMsg(int message,int* auxData,void* pointerData)
+SIM_DLLEXPORT void simMsg(SSimMsg* info)
 { // This is called quite often. Just watch out for messages/events you want to handle
-    if ( (message==sim_message_eventcallback_simulationactuation)&&(auxData[0]==0) )
+    if ( (info->msgId==sim_message_eventcallback_simulationactuation)&&(info->auxData[0]==0) )
     { // the main script's actuation section is about to be executed
         float dt=simGetSimulationTimeStep();
         for (unsigned int i=0;i<allBubbleRobs.size();i++)
@@ -265,13 +228,13 @@ SIM_DLLEXPORT void simMsg(int message,int* auxData,void* pointerData)
         }
     }
 
-    if (message==sim_message_eventcallback_scriptstatedestroyed)
+    if (info->msgId==sim_message_eventcallback_scriptstatedestroyed)
     { // script state was destroyed. Destroy all associated BubbleRob instances:
-        int index=getBubbleRobIndexFromScriptHandle(auxData[0]);
+        int index=getBubbleRobIndexFromScriptHandle(info->auxData[0]);
         while (index>=0)
         {
             allBubbleRobs.erase(allBubbleRobs.begin()+index);
-            index=getBubbleRobIndexFromScriptHandle(auxData[0]);
+            index=getBubbleRobIndexFromScriptHandle(info->auxData[0]);
         }
     }
 }
