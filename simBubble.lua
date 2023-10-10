@@ -1,3 +1,3 @@
-local simBubble=loadPlugin('simBubble')
+local simBubble = loadPlugin('simBubble');
 
 return simBubble
