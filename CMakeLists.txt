@@ -20,9 +20,9 @@ coppeliasim_add_plugin(
     simBubble
     LEGACY
     SOURCES
-    simBubble.cpp
+    sourceCode/simBubble.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simLib/scriptFunctionData.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simLib/scriptFunctionDataItem.cpp
 )
-coppeliasim_add_lua(simBubble.lua)
-coppeliasim_add_lua(simBubble-ce.lua)
+coppeliasim_add_lua(lua/simBubble.lua)
+coppeliasim_add_lua(lua/simBubble-ce.lua)
